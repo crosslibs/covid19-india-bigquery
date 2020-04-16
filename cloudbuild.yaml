@@ -22,7 +22,6 @@ steps:
   - name: 'gcr.io/cloud-builders/gcloud'
     args: ['run', 'deploy', '${_SERVICE}', '--image', '${_IMAGE}', '--region', '${_REGION}', '--platform', 'managed', '${_CLOUD_RUN_OPTS}',
            '--set-env-vars', 'GCP_PROJECT_ID=${_GCP_PROJECT_ID}', '--set-env-vars', 'BQ_LOCATION=${_BQ_LOCATION}',
-           '--set-env-vars', 'BQ_DATASET_ID=${_BQ_DATASET_ID}', '--set-env-vars', 'BQ_TABLE_NAME=${_BQ_TABLE_NAME}',
-           '--set-env-vars', 'COVID_DATA_URL=${_COVID_DATA_URL}']
+           '--set-env-vars', 'BQ_DATASET_ID=${_BQ_DATASET_ID}', '--set-env-vars', 'BQ_TABLE_NAME=${_BQ_TABLE_NAME}']
 images:
   - '${_IMAGE}'

@@ -14,6 +14,7 @@
  */
 
 'user strict';
+const cheerio = require('cheerio');
 const {BigQuery} = require('@google-cloud/bigquery');
 const express = require('express');
 const https = require('https');
@@ -45,8 +46,6 @@ const GCP_PROJECT_ID = process.env.GCP_PROJECT_ID;
 const BQ_DATASET_ID = process.env.BQ_DATASET_ID;
 const BQ_TABLE_NAME = process.env.BQ_TABLE_NAME;
 const BQ_TABLE = `${GCP_PROJECT_ID}.${BQ_DATASET_ID}.${BQ_TABLE_NAME}`;
-
-const COVID_DATA_URL = process.env.COVID_DATA_URL;
 
 const bigquery = new BigQuery({projectId: GCP_PROJECT_ID});
 
@@ -281,30 +280,6 @@ function writeData(data, res) {
 }
 
 /**
- * Fetch the COVID-19 data from the configured URL
- * and write data into BigQuery
- * If data already exists, then data will not be ingested.
- * @param {string} url COVID-19 case data to be ingested
- * @param {object} res server response object
- */
-function fetchAndWriteData(url, res) {
-  console.log(`Fetching data from URL: ${url}`);
-
-  https
-      .get(url, (resp) => {
-        let data = '';
-        console.log(`Response Status Code: ${resp.statusCode}`);
-        resp.on('data', (chunk) => data += chunk);
-        resp.on('end', () => writeData(JSON.parse(data), res));
-      })
-      .on('error', (error) => {
-        console.error(`Error occurred while fetching data: ${error}`);
-        sendResponse(response, 500, {error: error});
-      })
-      .end();
-}
-
-/**
  * Fetch COVID-19 data as of a particular date/time into BigQuery
  * If no data already exists, then 404 error is returned.
  * @param {object} requestedDate data as of a specified date
@@ -324,6 +299,114 @@ function readData(requestedDate, res) {
   } catch (err) {
     sendResponse(res, 400, {error: `Invalid input: ${requestedDate}`});
   }
+}
+
+/**
+ * Download COVID-19 India Cases Data from the
+ * Ministry of Health and Family Welfare (mohfw.gov.in)
+ * @param {Function} callback function to invoke after fetching the data
+ * @param {object} res server response object
+ */
+function currentCovid19Data(callback, res) {
+  const DOWNLOAD_URL = 'www.mohfw.gov.in';
+  const httpsOptions = {
+    hostname: DOWNLOAD_URL,
+    port: 443,
+    path: '/',
+    method: 'GET',
+  };
+
+  https
+      .request(httpsOptions, (resp) => {
+        let data = '';
+        console.log(`Response Status Code: ${resp.statusCode}`);
+        resp.on('data', (chunk) => data += chunk);
+        resp.on('end', () => parseResponse(callback, data, res));
+      })
+      .on('error', (error) => {
+        console.error(`Error occurred while fetching data: ${error}`);
+        sendResponse(response, 500, {error: error});
+      })
+      .end();
+}
+
+/**
+ * Parse COVID-19 India Cases Data from the
+ * Ministry of Health and Family Welfare (mohfw.gov.in) website
+ * and send the response back to the client
+ * @param {callback} callback callback function
+ * @param {string} data html page data (mohfw.gov.in)
+ * @param {object} res server response object
+ */
+function parseResponse(callback, data, res) {
+  console.log('Parsing data...');
+  const $ = cheerio.load(data);
+
+  const updatedAtStr = $('div .status-update > h2 > span').text();
+  const updatedAt = new Date(
+      Date.parse(updatedAtStr.substring(updatedAtStr.indexOf(': ')+1).trim()));
+  const numActive = parseInt(
+      $('div .site-stats-count ul').find('.bg-blue strong').text().trim());
+  const numCured = parseInt(
+      $('div .site-stats-count ul').find('.bg-green strong').text().trim());
+  const numDeaths = parseInt(
+      $('div .site-stats-count ul').find('.bg-red strong').text().trim());
+  const numMigrated = parseInt(
+      $('div .site-stats-count ul').find('.bg-orange strong').text().trim());
+
+  const statesData = [];
+  $('div .data-table table tbody').find('tr').each(
+      (i, row) => {
+        const cols = [];
+        $(row).find('td').each(
+            (j, col) => {
+              cols.push($(col).text().trim());
+            },
+        );
+        if (cols[0].match(/^\d+$/)) {
+          statesData.push({
+            name: cols[1].replace(/[^\w\s]/gi, ''),
+            cases: {
+              active: parseInt(cols[2]),
+              cured: parseInt(cols[3]),
+              deaths: parseInt(cols[4]),
+              migrated: 0,
+              total: parseInt(cols[2]) +
+                                parseInt(cols[3]) +
+                                parseInt(cols[4]),
+            },
+          });
+        }
+      },
+  );
+
+  const response = {
+    updatedAt: updatedAt.toISOString(),
+    name: 'India',
+    cases: {
+      active: numActive,
+      cured: numCured,
+      deaths: numDeaths,
+      migrated: numMigrated,
+      total: numActive + numCured + numDeaths + numMigrated,
+    },
+    states: statesData,
+  };
+
+  console.log(`Parsed data successfully: ${JSON.stringify(response)}`);
+  callback(response, res);
+}
+
+/**
+ * Parse COVID-19 India Cases Data from the
+ * Ministry of Health and Family Welfare (mohfw.gov.in) website
+ * and send the response back to the client
+ * @param {string} data html page data (mohfw.gov.in)
+ * @param {object} res server response object
+ */
+function sendData(data, res) {
+  console.log('Sending data...');
+  sendResponse(res, 200, data);
 }
 
 const app = express();
@@ -347,12 +430,17 @@ app.get(DATA_URL,
 app.put(DATA_URL, (req, res) => writeData(req.body, res));
 
 /**
+ * Fetch current data from MoHFW
+ */
+app.get(CURRENT_DATA_URL, (req, res) => currentCovid19Data(sendData, res));
+
+/**
  * Write data into BigQuery but by fetching it from the URL specified.
  * Please note that this is an idempotent operation.
  * If the update already exists in BQ, then nothing
  * nothing is written into BQ
  */
-app.put(CURRENT_DATA_URL, (req, res) => fetchAndWriteData(COVID_DATA_URL, res));
+app.put(CURRENT_DATA_URL, (req, res) => currentCovid19Data(writeData, res));
 
 /**
  * Swagger UI
@@ -364,7 +452,7 @@ app.use('/v1/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDoc));
  */
 app.all('*',
     (req, res) => {
-      if (req.url != DATA_URL) {
+      if (req.url != DATA_URL && req.url != CURRENT_DATA_URL) {
         sendResponse(res, 404, {error: 'Requested URL does not exist'});
       } else if (req.method != 'GET' || req.method != 'PUT') {
         sendResponse(res, 405, {error: 'Unsupported HTTP method'});

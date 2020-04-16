@@ -1,4 +1,14 @@
-# Create BigQuery table to store historical data
+# API for COVID-19 India Data from official source, Ministry of Health and Family Welfare (mohfw.gov.in)
+
+The APIs also help generate historical data by persisting changes into BigQuery. There are 4 APIs provided, 
+  * one to fetch data from historical data source (BQ)
+  * one for writing provided data into the data source (BQ), 
+  * one for fetching current data from Ministry of Health and Family Welfare website and 
+  * one for ingesting the current data from Ministry of Health and Family Welfare website into the data source (BQ)
+
+Please refer to the API documentation [here](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/crosslibs/covid19-india-bigquery/master/swagger.yaml) to understand how to use them.
+
+## Create BigQuery table to store historical data
 
 ## Setup
 
@@ -27,9 +37,9 @@ bq mk -t --description="COVID-19 India historical data" ${BQ_TABLE} ./schema.jso
 
 ```
 
-### Now you can use this table to load data from MoHFW website / API already deployed
+### Now you can use this table to write data from MoHFW website or other historical data 
 
-# Build and Start the service
+# Build and Start the APIs
 
 ## Run locally
 
@@ -78,7 +88,11 @@ HTTP PUT [http://localhost:8080/v1/data](http://localhost:8080/v1/data)
 
 Please see the API documentation to understand the request body required.
 
-## Ingest current data of COVID-19 cases in India and across the states into BigQuery table created above through this API. An url needs to be specified in environemnt variable `COVID_DATA_URL` from where to download the live data.
+## Fetch current data of COVID-19 cases in India and across the states directly from MoHFW website.
+
+HTTP GET [http://localhost:8080/v1/data/current](http://localhost:8080/v1/data/current)
+
+## Ingest current data of COVID-19 cases in India and across the states into BigQuery table directly from MoHFW website.
 
 HTTP PUT [http://localhost:8080/v1/data/current](http://localhost:8080/v1/data/current)
 

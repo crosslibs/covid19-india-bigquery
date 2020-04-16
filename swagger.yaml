@@ -25,7 +25,10 @@ tags:
 - name: "historical data"
   description: "Ingest or Fetch historical data"
 - name: "latest data"
-  description: "Ingest latest data into BigQuery"
+  description: "Fetch or ingest latest data form Ministry of Health and Family Welfare, Govt of India into BigQuery"
+  externalDocs:
+    description: "Source"
+    url: "https://www.mohfw.gov.in"
 schemes:
 - "http"
 paths:
@@ -90,7 +93,7 @@ paths:
     put:
       tags:
       - "latest data"
-      summary: "Fetches the current data from the preconfigured URL and ingests into BigQuery. The format of the response from the URL should be the same as that of the /v1/data PUT API. Please note that it is an idempotent operation. Data will only be ingested if no data exists for the specified date/time."
+      summary: "Fetches the current data from mohfw.gov.in and ingests into BigQuery. Please note that it is an idempotent operation. Data will only be ingested if no data exists for the specified date/time."
       operationId: "putCurrent"
       produces:
       - "application/json"
@@ -105,6 +108,22 @@ paths:
             $ref: "#/definitions/ErrorMessage"
         500:
           description: "error occured while ingesting data"
+          schema:
+            $ref: "#/definitions/ErrorMessage"
+    get:
+      tags:
+      - "latest data"
+      summary: "Fetch current data about COVID-19 cases in India from mohfw.gov.in"
+      operationId: "get"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "fetch data successful"
+          schema:
+            $ref: "#/definitions/COVIDData"
+        500:
+          description: "error occured while fetching data"
           schema:
             $ref: "#/definitions/ErrorMessage"
 definitions:
