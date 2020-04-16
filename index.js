@@ -16,7 +16,8 @@
 'user strict';
 const {BigQuery} = require('@google-cloud/bigquery');
 const express = require('express');
-const jsonSchema = require('./schema.json');
+const https = require('https');
+const jsonSchema = require('./jsonSchema.json');
 const swaggerUI = require('swagger-ui-express');
 const validate = require('jsonschema').validate;
 const YAML = require('yamljs');
@@ -44,6 +45,8 @@ const GCP_PROJECT_ID = process.env.GCP_PROJECT_ID;
 const BQ_DATASET_ID = process.env.BQ_DATASET_ID;
 const BQ_TABLE_NAME = process.env.BQ_TABLE_NAME;
 const BQ_TABLE = `${GCP_PROJECT_ID}.${BQ_DATASET_ID}.${BQ_TABLE_NAME}`;
+
+const COVID_DATA_URL = process.env.COVID_DATA_URL;
 
 const bigquery = new BigQuery({projectId: GCP_PROJECT_ID});
 
@@ -278,6 +281,30 @@ function writeData(data, res) {
 }
 
 /**
+ * Fetch the COVID-19 data from the configured URL
+ * and write data into BigQuery
+ * If data already exists, then data will not be ingested.
+ * @param {string} url COVID-19 case data to be ingested
+ * @param {object} res server response object
+ */
+function fetchAndWriteData(url, res) {
+  console.log(`Fetching data from URL: ${url}`);
+
+  https
+      .get(url, (resp) => {
+        let data = '';
+        console.log(`Response Status Code: ${resp.statusCode}`);
+        resp.on('data', (chunk) => data += chunk);
+        resp.on('end', () => writeData(JSON.parse(data), res));
+      })
+      .on('error', (error) => {
+        console.error(`Error occurred while fetching data: ${error}`);
+        sendResponse(response, 500, {error: error});
+      })
+      .end();
+}
+
+/**
  * Fetch COVID-19 data as of a particular date/time into BigQuery
  * If no data already exists, then 404 error is returned.
  * @param {object} requestedDate data as of a specified date
@@ -302,6 +329,7 @@ function readData(requestedDate, res) {
 const app = express();
 const SERVER_PORT = 8080;
 const DATA_URL = '/v1/data';
+const CURRENT_DATA_URL = '/v1/data/current';
 
 app.use(express.json());
 
@@ -312,11 +340,19 @@ app.get(DATA_URL,
     (req, res) => readData(req.query.date, res));
 
 /**
- * Write current official data into BigQuery. Please note that this is an
+ * Write data into BigQuery. Please note that this is an
  * idempotent operation. If the update already exists in BQ, then nothing
  * nothing is written into BQ
  */
 app.put(DATA_URL, (req, res) => writeData(req.body, res));
+
+/**
+ * Write data into BigQuery but by fetching it from the URL specified.
+ * Please note that this is an idempotent operation.
+ * If the update already exists in BQ, then nothing
+ * nothing is written into BQ
+ */
+app.put(CURRENT_DATA_URL, (req, res) => fetchAndWriteData(COVID_DATA_URL, res));
 
 /**
  * Swagger UI

@@ -24,6 +24,8 @@ info:
 tags:
 - name: "historical data"
   description: "Ingest or Fetch historical data"
+- name: "latest data"
+  description: "Ingest latest data into BigQuery"
 schemes:
 - "http"
 paths:
@@ -84,6 +86,27 @@ paths:
           description: "error occured while fetching data"
           schema:
            $ref: "#/definitions/ErrorMessage"
+  /v1/data/current:
+    put:
+      tags:
+      - "latest data"
+      summary: "Fetches the current data from the preconfigured URL and ingests into BigQuery. The format of the response from the URL should be the same as that of the /v1/data PUT API. Please note that it is an idempotent operation. Data will only be ingested if no data exists for the specified date/time."
+      operationId: "putCurrent"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "ingestion finished without an error"
+          schema:
+            $ref: "#/definitions/ApiResponse"
+        400:
+          description: "invalid input"
+          schema:
+            $ref: "#/definitions/ErrorMessage"
+        500:
+          description: "error occured while ingesting data"
+          schema:
+            $ref: "#/definitions/ErrorMessage"
 definitions:
   ApiResponse:
     type: "object"

@@ -78,5 +78,11 @@ HTTP PUT [http://localhost:8080/v1/data](http://localhost:8080/v1/data)
 
 Please see the API documentation to understand the request body required.
 
+## Ingest current data of COVID-19 cases in India and across the states into BigQuery table created above through this API. An url needs to be specified in environemnt variable `COVID_DATA_URL` from where to download the live data.
+
+HTTP PUT [http://localhost:8080/v1/data/current](http://localhost:8080/v1/data/current)
+
+Please see the API documentation to understand the request body required.
+
 ## Contact
 For any queries, please reach out to me at cpdevws@gmail.com or post an issue in the repo.

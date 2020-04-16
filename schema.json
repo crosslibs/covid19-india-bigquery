@@ -1,103 +1,56 @@
-{
-    "definitions": {},
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://example.com/root.json",
-    "type": "object",
-    "title": "COVID-19 India Historical Data API Schema",
-    "required": [
-      "updatedAt",
-      "name"
-    ],
-    "properties": {
-      "updatedAt": {
-        "$id": "#/properties/updatedAt",
-        "type": "string",
-        "format": "date-time",
-        "description": "Time when the stats are last updated should follow ISO8601 format",
-        "examples": [
-          "2020-04-15T00:00:00Z"
-        ]
-      },
-      "name": {
-        "$id": "#/properties/name",
-        "type": "string",
-        "description": "country name",
-        "examples": [
-          "India"
-        ],
-        "pattern": "^([^\\s]+(\\s)*)+$"
-      },
-      "cases": {
-          "$id": "#/properties/cases",
-          "type": "object",
-          "description": "Number of COVID-19 cases",
-          "default": null,
-          "required": [],
-          "properties": {
-              "active": {
-                "id": "#/properties/cases/properties/active",
-                "type": "integer",
-                "default": null,
-                "description": "Number of active cases",
-                "examples": ["123"],
-                "format": "int32"
-              },
-              "cured": {
-                "id": "#/properties/cases/properties/cured",
-                "type": "integer",
-                "default": null,
-                "description": "Number of cured or discharged cases",
-                "examples": ["100"],
-                "format": "int32"
-              },
-              "deaths": {
-                "id": "#/properties/cases/properties/deaths",
-                "type": "integer",
-                "default": null,
-                "description": "Number of deaths",
-                "examples": ["10"],
-                "format": "int32"
-              },
-              "migrated": {
-                "id": "#/properties/cases/properties/migrated",
-                "type": "integer",
-                "default": null,
-                "description": "Number of migrated cases",
-                "examples": ["1"],
-                "format": "int32"
-              },
-              "total": {
-                "id": "#/properties/cases/properties/total",
-                "type": "integer",
-                "default": null,
-                "description": "Total number of all COVID-19 cases",
-                "examples": ["234"],
-                "format": "int32"
-              }
-          }
-      },
-      "states": {
-          "$id": "#/properties/states",
-          "type": "array",
-          "title": "States data",
-          "default": null,
-          "items": {
-              "$id": "#/properties/states/items",
-              "type": "object",
-              "title": "State data",
-              "required": ["name"],
-              "properties": {
-                "name": {
-                  "type": "string",
-                  "description": "Name of the state",
-                  "example": "Andhra Pradesh",
-                  "pattern": "^([^\\s]+(\\s)*)+$"
-                },
-                "cases": {
-                  "$ref": "#/properties/cases"
-                }
-              }
-          }
-      }
+[
+    {
+      "description": "name of the country",
+      "name": "country_name",
+      "type": "STRING",
+      "mode": "REQUIRED"
+    },
+    {
+      "description": "name of the state or province",
+      "name": "state_name",
+      "type": "STRING",
+      "mode": "NULLABLE"
+    },
+    {
+        "description": "number of active cases",
+        "name": "active",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+    },
+    {
+        "description": "number of cured or discharged cases",
+        "name": "cured",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+    },
+    {
+        "description": "number of deaths",
+        "name": "deaths",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+    },
+    {
+        "description": "number of migrated cases",
+        "name": "migrated",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+    },
+    {
+        "description": "total number of COVID-19 cases",
+        "name": "total",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+    },
+    {
+        "description": "last updated in the official source at",
+        "name": "updated_at",
+        "type": "TIMESTAMP",
+        "mode": "REQUIRED"
+    },
+    {
+        "description": "ingestion date/time",
+        "name": "ingested_at",
+        "type": "TIMESTAMP",
+        "mode": "REQUIRED"
     }
-}
+] 
