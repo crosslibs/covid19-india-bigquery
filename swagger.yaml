@@ -1,0 +1,157 @@
+# Copyright 2020, Chaitanya Prakash N <chaitanyaprakash.n@gmail.com>
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+swagger: "2.0"
+info:
+  description: "API that allows you to ingest and read Coronavirus COVID-19 cases data in India into / from BigQuery."
+  version: "1.0.0"
+  title: "COVID-19 India Historical Data API"
+  contact:
+    email: "chaitanyaprakash.n@gmail.com"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+tags:
+- name: "historical data"
+  description: "Ingest or Fetch historical data"
+schemes:
+- "http"
+paths:
+  /v1/data:
+    put:
+      tags:
+      - "historical data"
+      summary: "Writes specified COVID-19 cases in India data belonging to a specified date/time. Please note that it is an idempotent operation. Data will only be ingested if no data exists for the specified date/time."
+      operationId: "put"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "data"
+        in: "body"
+        description: "COVID-19 data to be ingested"
+        schema:
+          $ref: "#/definitions/COVIDData"
+      responses:
+        200:
+          description: "ingestion finished without an error"
+          schema:
+            $ref: "#/definitions/ApiResponse"
+        400:
+          description: "invalid input"
+          schema:
+            $ref: "#/definitions/ErrorMessage"
+        500:
+          description: "error occured while ingesting data"
+          schema:
+           $ref: "#/definitions/ErrorMessage"
+    get:
+      tags:
+      - "historical data"
+      summary: "Fetch data about COVID-19 cases in India as of a specified date/time"
+      operationId: "get"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "date"
+        in: "query"
+        description: "Date for which the count of cases is requested. Must be specified in ISO8601 format e.g. 2020-04-15T00:00:00Z. If omitted, the current date will be used as input."
+        required: false
+        type: "string"
+        format: "date"
+        default: "today"
+      responses:
+        200:
+          description: "fetch data successful"
+          schema:
+            $ref: "#/definitions/COVIDData"
+        400:
+          description: "invalid date specified"
+          schema:
+            $ref: "#/definitions/ErrorMessage"
+        500:
+          description: "error occured while fetching data"
+          schema:
+           $ref: "#/definitions/ErrorMessage"
+definitions:
+  ApiResponse:
+    type: "object"
+    properties:
+      message:
+        type: "string"
+        description: "Message indicating whether the ingestion was successful or ignored"
+        example: 
+          - 'Ingestion successful'
+          - 'Data already exists. Ingestion request ignored'
+  COVIDData:
+    type: "object"
+    properties:
+      updatedAt:
+        type: "string"
+        format: "date-time"
+        description: "Time when the stats are last updated"
+      name:
+        type: "string"
+        description: "Country name"
+        example: "India"
+      cases:
+        $ref: "#/definitions/CasesData"
+      states:
+        type: "array"
+        items:
+            $ref: "#/definitions/StatesData"
+  CasesData:
+    type: "object"
+    properties:
+      active:
+        type: "integer"
+        format: "int32"
+        description: "Total number of active cases"
+        example: 123
+      cured:
+        type: "integer"
+        format: "int32"
+        description: "Total number of cured / discharged cases"
+        example: 100
+      deaths:
+        type: "integer"
+        format: "int32"
+        description: "Total number of COVID related deaths"
+        example: 50
+      migrated:
+        type: "integer"
+        format: "int32"
+        description: "Total number of migrated cases"
+        example: 1
+      total:
+        type: "integer"
+        format: "int32"
+        description: "Total number of COVID-19 cases. Sum of total active, cured, deaths and migrated cases"
+        example: 174
+  StatesData:
+    type: "object"
+    properties:
+      name:
+        type: "string"
+        description: "Name of the state"
+        example: "Andhra Pradesh"
+      cases:
+        $ref: "#/definitions/CasesData"
+  ErrorMessage:
+    type: "object"
+    properties:
+      error:
+        type: "string"
+        description: "error description"
+        example: "ENOENT the host name specified is not found"

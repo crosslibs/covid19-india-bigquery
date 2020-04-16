@@ -1,0 +1,55 @@
+{
+  "name": "cases",
+  "version": "1.0.0",
+  "description": "COVID-19 India Cases",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "lint": "eslint '**/*.js'",
+    "lint-fix": "eslint --fix '**/*.js'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/crosslibs/covid19-india-bigquery.git"
+  },
+  "keywords": [
+    "covid-19",
+    "india",
+    "mohfw",
+    "gov",
+    "ministry",
+    "of",
+    "health",
+    "india",
+    "government",
+    "mohfw.gov.in",
+    "cases",
+    "count",
+    "api",
+    "confirmed",
+    "migrated",
+    "cured",
+    "official",
+    "discharged",
+    "deaths",
+    "coronavirus",
+    "bigquery",
+    "historical"
+  ],
+  "author": "Chaitanya Prakash N <chaitanyaprakash.n@gmail.com>",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=12.0.0"
+  },
+  "dependencies": {
+    "@google-cloud/bigquery": "^4.7.0",
+    "express": "^4.17.1",
+    "jsonschema": "^1.2.6",
+    "swagger-ui-express": "^4.1.4",
+    "yamljs": "^0.3.0"
+  },
+  "devDependencies": {
+    "eslint": "^6.8.0",
+    "eslint-config-google": "^0.14.0"
+  }
+}
