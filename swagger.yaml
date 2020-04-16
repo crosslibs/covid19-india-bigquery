@@ -13,9 +13,9 @@
 
 swagger: "2.0"
 info:
-  description: "API that allows you to ingest and read Coronavirus COVID-19 cases data in India into / from BigQuery."
+  description: "API that allows you to ingest and read Coronavirus COVID-19 cases data in India into / from BigQuery. The 'latest data' APIs also fetch data directly from the official source, mohfw.gov.in, and returns as response or ingests into BigQuery as well."
   version: "1.0.0"
-  title: "COVID-19 India Historical Data API"
+  title: "COVID-19 Cases In India Data API"
   contact:
     email: "chaitanyaprakash.n@gmail.com"
   license:
